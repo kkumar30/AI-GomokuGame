@@ -1,4 +1,6 @@
 import sys, os
+import time
+
 
 safety_count = 0
 groupname = "goku"
@@ -28,16 +30,16 @@ def send_move(move):
         file.write(move)
 
 
-while mygroupname_file in referee_files:
+while mygroupname_file in os.listdir("gomoku"):
     isEndGameExist = [True for file in referee_files if end_game_file in file]
     if True not in isEndGameExist: #means end_game file not present, so can call for the turn for minimax calculator
-        print "No eng game File found! Continuing my turn..."
+        print "No end game File found! Continuing my turn..."
         opponent_move = fetch_opponent_move(referee_files)
         print "Opponent move = ", opponent_move
         my_move = generate_solution(opponent_move)
         print "My move = ", my_move
         send_move(my_move)
-        break
         safety_count +=1
+        time.sleep(0.1) #Wait for 100 ms
 
 

@@ -31,18 +31,30 @@ def send_move(move):
         file.write(move)
 
 
-while mygroupname_file in os.listdir("gomoku"):
+while mygroupname_file in os.listdir("gomoku") and safety_count <3:
     isEndGameExist = [True for file in referee_files if end_game_file in file]
+
     if True not in isEndGameExist: #means end_game file not present, so can call for the turn for minimax calculator
         print "No end game File found! Continuing my turn..."
+
+        #Get the opponent's move
         opponent_move = fetch_opponent_move(referee_files)
         print "Opponent move = ", opponent_move
+
+        #Insert to board with the opponents move
+        Board.insert_to_board(opponent_move)
+
+        #Generate my move
         my_move = generate_solution(opponent_move)
         print "My move = ", my_move
+
+        #Write move to Referee's move_file
         send_move(my_move)
+
         safety_count +=1
         time.sleep(0.1) #Wait for 100 ms
-    else: #end_game file is present
+    else:
+        #end_game file is present
         print "Game Over!"
         break
 

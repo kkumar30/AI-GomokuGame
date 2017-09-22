@@ -1,4 +1,13 @@
 board = [[None]*15 for _ in range(15)]
+"""
+Board status is defined as
+1 - my turn
+0 - Opponent's turn 
+"""
+
+def refresh():
+    global board
+    board = [[None] * 15 for _ in range(15)]
 
 def print_board():
     for i in board:
@@ -26,6 +35,4 @@ def insert_to_board(movestring):
 def get_board():
     return board
 
-insert_to_board("goku B 12")
-trtr = get_board()
-print trtr
+# insert_to_board("goku B 12")

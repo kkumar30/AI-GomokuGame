@@ -1,5 +1,6 @@
 import sys, os
 import time
+import Board
 
 
 safety_count = 0
@@ -46,3 +47,12 @@ while mygroupname_file in os.listdir("gomoku"):
         break
 
 
+## To test the Functionality export of the board
+# print "Printing the board"
+# Board.print_board()
+# print "After refresh, \n"
+# Board.refresh()
+# Board.print_board()
+# print "Adding command goku A 5"
+# Board.insert_to_board("Goku A 5")
+Board.print_board()

@@ -41,5 +41,8 @@ while mygroupname_file in os.listdir("gomoku"):
         send_move(my_move)
         safety_count +=1
         time.sleep(0.1) #Wait for 100 ms
+    else: #end_game file is present
+        print "Game Over!"
+        break
 
 

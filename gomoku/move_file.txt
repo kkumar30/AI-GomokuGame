@@ -1,1 +1,1 @@
-myGroup B 4
+goku A 10

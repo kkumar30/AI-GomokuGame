@@ -1,1 +1,1 @@
-myGroup A 10
+App A 10

@@ -20,9 +20,17 @@ path = "gomuku"
 ##Function Calls
 #Here is where we need to perform minimax function
 def generate_solution(move):
-    return groupname + " A 10"
+    x, y = Board.alpha_beta_search(Board.board)
+    print "After alpha beta ", x,y
+    x_axis = chr(x + 65)
+    y_axis = int(y) + 1
+    final_move = str(x_axis) + " " + str(y_axis)
+    return final_move
+
+
+    # return groupname + " A 10"
 #Fetch the move from the file
-def fetch_opponent_move(directory):
+def fetch_opponent_move():
     with open("gomoku/move_file.txt") as file:
         return file.read()
 #Write our move to the file
@@ -38,7 +46,7 @@ while mygroupname_file in os.listdir("gomoku") and safety_count <3:
         print "No end game File found! Continuing my turn..."
 
         #Get the opponent's move
-        opponent_move = fetch_opponent_move(referee_files)
+        opponent_move = fetch_opponent_move()
         print "Opponent move = ", opponent_move
 
         #Insert to board with the opponents move

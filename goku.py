@@ -2,7 +2,6 @@ import sys, os
 import time
 import Board
 
-
 safety_count = 0
 groupname = "goku"
 mygroupname_file = groupname + ".go"
@@ -16,11 +15,16 @@ print referee_files
 end_game_file = "end_game"
 # end_game_file = "referee" #Comment this out
 path = "gomuku"
-
+starting_time1 = time.time()
 ##Function Calls
 #Here is where we need to perform minimax function
-def generate_solution(move):
-    x, y = Board.alpha_beta_search(Board.board)
+def generate_solution(move, starting_time):
+    # global starting_time1
+
+    if len(move) > 1:
+        x, y = Board.alpha_beta_search(Board.board, starting_time, False)
+    else:
+        x, y = Board.alpha_beta_search(Board.board, starting_time, True)
     print "After alpha beta ", x,y
     x_axis = chr(x + 65)
     y_axis = int(y) + 1
@@ -31,15 +35,22 @@ def generate_solution(move):
     # return groupname + " A 10"
 #Fetch the move from the file
 def fetch_opponent_move():
-    with open("gomoku/move_file.txt") as file:
+    with open("gomoku/move_file") as file:
         return file.read()
+
 #Write our move to the file
 def send_move(move):
-    with open("gomoku/move_file.txt", "w") as file:
-        file.write(move)
+    with open("gomoku/move_file", "w") as file:
+        file.write(groupname + " " + move)
 
 
-while mygroupname_file in os.listdir("gomoku") and safety_count <3:
+while True: # safety_count <3:
+
+    while mygroupname_file not in os.listdir("gomoku"):
+        continue
+
+    starting_time = time.time()
+
     isEndGameExist = [True for file in referee_files if end_game_file in file]
 
     if True not in isEndGameExist: #means end_game file not present, so can call for the turn for minimax calculator
@@ -53,14 +64,14 @@ while mygroupname_file in os.listdir("gomoku") and safety_count <3:
         Board.insert_to_board(opponent_move)
 
         #Generate my move
-        my_move = generate_solution(opponent_move)
+        my_move = generate_solution(opponent_move, starting_time)
         print "My move = ", my_move
 
         #Write move to Referee's move_file
         send_move(my_move)
 
         safety_count +=1
-        time.sleep(0.1) #Wait for 100 ms
+        time.sleep(0.18) #Wait for 100 ms
     else:
         #end_game file is present
         print "Game Over!"

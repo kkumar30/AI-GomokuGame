@@ -5,6 +5,7 @@ import sys
 import os
 import random
 import time
+import hashlib
 
 logging.basicConfig(format='%(levelname)s:  %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__file__)
@@ -43,18 +44,20 @@ class GomokuBoard(object):
                                             for x in range(width)]
 
         self.init_field() #originally used to init minefield, but not really useful here...
+        self.move_history = []
 
     def init_field(self):
         pass
 
     def __getitem__(self, index):
-        x, y = index
+        (x, y) = index
         return self._field[x][y]
 
     def isFieldOpen(self, (x,y)):
         return self._field[x][y].isEmpty
 
     def placeToken(self, move):
+        self.move_history.append(move)
         return self._field[move.x][move.y].playField(move.team_name)
 
     def getBoard(self):
@@ -62,6 +65,19 @@ class GomokuBoard(object):
                  for x in range(self.width)]
 
         return board
+    
+    def printBoard(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self._field[x][y].team is None:
+                    sys.stdout.write('-')
+                else:
+                    team_name_hash = hashlib.md5(self._field[x][y].team).hexdigest()
+                    sys.stdout.write(team_name_hash[0])
+                sys.stdout.write(' ')
+            sys.stdout.write('\n')
+            
+        sys.stdout.flush()
 
     def isFull(self):
         for x in range(self.width):
@@ -69,15 +85,16 @@ class GomokuBoard(object):
                 if self.isFieldOpen( (x, y) ):
                     return False
         return True
+        
 
 class Move(object):
     def __init__(self, team_name, x_loc, y_loc):
         self.team_name = team_name
         self.x = x_loc
-        self.y = y_loc
+        self.y = y_loc - 1
 
     def __str__(self):
-        return "%s %s %s" % (self.team_name, chr(self.x + ord('a')), self.y)
+        return "%s %s %s" % (self.team_name, chr(self.x + ord('a')), (self.y + 1))
 
 class Game(object):
     def __init__(self, size_x=board_width, size_y=board_height, length_to_win=length_to_win):
@@ -122,86 +139,49 @@ class Game(object):
                     x_fits_on_board = ( x + self.length_to_win < self.board.width )
                     y_fits_on_board = ( y + self.length_to_win < self.board.height )
                     diagf_fits_on_board = ( x + self.length_to_win < self.board.width ) and ( y + self.length_to_win < self.board.height )
-                    diagb_fits_on_board = ( x + self.length_to_win < self.board.width ) and ( y - self.length_to_win > 0 )
+                    diagb_fits_on_board = ( x + self.length_to_win < self.board.width ) and ( y + self.length_to_win > 0 )
 
                     # Generate lists of pieces on board
                     if x_fits_on_board:
                         x_set = list(set([board[x + delta][y] for delta in range(self.length_to_win)]))
                     else:
-                        x_set = [None]
+                        x_set = []
 
                     if y_fits_on_board:
                         y_set = list(set([board[x][y + delta] for delta in range(self.length_to_win)]))
                     else:
-                        x_set = [None]
+                        y_set = []
 
                     if diagf_fits_on_board:
                         diagf_set = list(set([board[x + delta][y + delta] for delta in range(self.length_to_win)]))
                     else:
-                        diagf_set = [None]
+                        diagf_set = []
 
                     if diagb_fits_on_board:
                         diagb_set = list(set([board[x + delta][y - delta] for delta in range(self.length_to_win)]))
                     else:
-                        diagb_set = [None]
+                        diagb_set = []
 
                     # Now check the responses
 
                     if ((len(x_set) == 1)):
-                        color = x_set[0]
-                        try:
-                            below = board[x - 1][y]
-                        except IndexError:
-                            below = None
-                        try:
-                            above = board[x + self.length_to_win][y]
-                        except IndexError:
-                            above = None
-                        if (color != below) and (color != above):
-                            return True
+                        return True
 
                     if ((len(y_set) == 1)):
-                        color = y_set[0]
-                        try:
-                            below = board[x][y - 1]
-                        except IndexError:
-                            below = None
-                        try:
-                            above = board[x][y + self.length_to_win]
-                        except IndexError:
-                            above = None
-                        if (color != below) and (color != above):
-                            return True
+                        return True
 
                     if ((len(diagf_set) == 1)):
-                        color = diagf_set[0]
-                        try:
-                            below = board[x - 1][y - 1]
-                        except IndexError:
-                            below = None
-                        try:
-                            above = board[x + self.length_to_win][y + self.length_to_win]
-                        except IndexError:
-                            above = None
-                        if (color != below) and (color != above):
-                            return True
+                        return True
 
                     if ((len(diagb_set) == 1)):
-                        color = diagb_set[0]
-                        try:
-                            below = board[x - 1][y - 1]
-                        except IndexError:
-                            below = None
-                        try:
-                            above = board[x + self.length_to_win][y + self.length_to_win]
-                        except IndexError:
-                            above = None
-                        if (color != below) and (color != above):
-                            return True
+                        return True
         return False
 
     def isBoardFull(self):
         return self.board.isFull()
+    
+    def printBoard(self):
+        self.board.printBoard()
 
 
 def readMoveFile(move_file="move_file", purge=True):
@@ -247,6 +227,13 @@ def writeEndFile(move_msg, end_file="end_game"):
         end_fid.flush()
     return os.stat(move_file_name).st_mtime
 
+def writeHistoryFile(board, history_File="history_file"):
+    with open(history_File, 'w') as history_fid:
+        for move in board.move_history:
+            history_fid.write(str(move))
+            history_fid.write("\n")
+    return True
+
 
 def getTeamFileName(team_name):
     return team_name + ".go"
@@ -283,10 +270,14 @@ def play_gomoku(team1, team2):
     teams = [team1, team2]
     random.shuffle(teams)
 
+    def opponentOf(team):
+        return teams[ (teams.index(team) - 1) % len(teams) ]
+
     game = Game(board_width, board_height, length_to_win)
 
     playing_game = True
     move_file_mod_info = initMoveFile(move_file_name)
+    time.sleep(1)
     while (playing_game):
         up_to_play = teams[ (game.turn % len(teams)) ]
         logging.info("%s's turn!" % up_to_play)
@@ -297,10 +288,10 @@ def play_gomoku(team1, team2):
         logging.debug("Played in time: %s" % played_in_time)
         if not played_in_time:
             logging.error("Out of time!")
-            win_team = teams[ (game.turn + (teams.index(up_to_play)-1)) % len(teams) ]
+            win_team = opponentOf(up_to_play)
             lose_team = up_to_play
-            logging.info("%s loses!" % (win_team,))
-            logging.info("%s wins!" % (lose_team,))
+            logging.info("%s loses!" % (lose_team,))
+            logging.info("%s wins!" % (win_team,))
             move_msg = "END: %s WINS!  %s LOSES!  out of time" % (win_team, lose_team,)
             playing_game = False
             move = Move(up_to_play, -1, -1)
@@ -312,30 +303,31 @@ def play_gomoku(team1, team2):
 
             if move.team_name != up_to_play:
                 logging.error("Wait your turn!")
-                win_team = teams[ (game.turn + (teams.index(up_to_play)-1)) % len(teams) ]
+                win_team = opponentOf(up_to_play)
                 lose_team = up_to_play
-                logging.info("%s loses!" % (win_team,))
-                logging.info("%s wins!" % (lose_team,))
+                logging.info("%s loses!" % (lose_team,))
+                logging.info("%s wins!" % (win_team,))
                 move_msg = "END: %s WINS!  %s LOSES!  out of order move" % (win_team, lose_team,)
                 playing_game = False
             elif not game.isValidMove(move):
                 logging.error("Invalid move!")
-                win_team = teams[ (game.turn + (teams.index(up_to_play)-1)) % len(teams) ]
+                win_team = opponentOf(up_to_play)
                 lose_team = up_to_play
-                logging.info("%s loses!" % (win_team,))
-                logging.info("%s wins!" % (lose_team,))
+                logging.info("%s loses!" % (lose_team,))
+                logging.info("%s wins!" % (win_team,))
                 move_msg = "END: %s WINS!  %s LOSES!  invalid move" % (win_team, lose_team,)
                 playing_game = False
             else:
                 game.makeMove(move)
+                game.printBoard()
                 if game.checkForWin():
                     #logging.info("%s wins!" % (up_to_play))
                     #logging.info("%s loses!" % teams[ (game.turn + (teams.index(up_to_play)-1)) % len(teams) ])
                     #move_msg = "WIN : %s in a row!" % (game.length_to_win)
                     win_team = up_to_play
-                    lose_team =teams[ (game.turn + (teams.index(up_to_play)-1)) % len(teams) ]
-                    logging.info("%s loses!" % (win_team,))
-                    logging.info("%s wins!" % (lose_team,))
+                    lose_team = opponentOf(up_to_play)
+                    logging.info("%s loses!" % (lose_team,))
+                    logging.info("%s wins!" % (win_team,))
                     move_msg = "END: %s WINS!  %s LOSES!  %s in a row!" % (win_team, lose_team, game.length_to_win)
                     playing_game = False
 
@@ -348,11 +340,11 @@ def play_gomoku(team1, team2):
             move_msg = "" #"KEEP GOING!"
 
         move_file_mod_info = writeMoveFile(move, move_msg, move_file_name)
-
-        pass
-        #playing_game = False
+        time.sleep(1)
+        
         logging.info("")
     writeEndFile(move_msg)
+    writeHistoryFile(game.board)
     for team in teams:
         writeTeamGoFile(team)
     pass

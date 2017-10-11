@@ -1,7 +1,10 @@
 import Eval
+import time
 
+# starting_time = time.time()
 board = [[None]*15 for _ in range(15)]
 globaldepth = 0
+start_time = time.time()
 """
 Board status is defined as
 1 - my turn
@@ -13,7 +16,6 @@ Team Name defined as below - Goku
 """
 myteamname = ["Goku, goku"]
 
-
 def refresh():
     global board
     board = [[None] * 15 for _ in range(15)]
@@ -23,6 +25,9 @@ def print_board():
         print i,"\n"
 
 def insert_to_board(movestring):
+    if len(movestring) == 0 or len(movestring.split(" ")) != 3:
+        return
+
     player, x, y = movestring.split(" ")
     print "Inserting at .. ", x, y
     x = int(ord(x.lower()) - 96) - 1
@@ -54,18 +59,27 @@ def get_board():
 Alpha Beta Pruning
 """
 
-def alpha_beta_search(board):
+def alpha_beta_search(board, start_time, if_first_move):
     best_row = -1
     best_col = -1
     best_eval = -(float("inf"))
 
     for x in range(0,15):
         for y in range(0,15):
-            if board[x][y] == None and check_neighbor(board, x, y): #only checks if the element is inserted near a board piece
+            if board[x][y] == None and check_neighbor(board, x, y) and if_first_move==False: #only checks if the element is inserted near a board piece
                 board[x][y] = 1
-                v = max_value(board, -(float("inf")), (float("inf")), 2)
+                v = max_value(board, -(float("inf")), (float("inf")), 2, start_time)
                 print v
                 board[x][y] = None
+                if v > best_eval:
+                    best_eval = v
+                    best_row = x
+                    best_col = y
+            elif if_first_move == True:
+                best_eval = 5
+                best_row = 7
+                best_col = 7
+                return best_row, best_col
 
                 if v > best_eval:
                     best_eval = v
@@ -78,24 +92,26 @@ def alpha_beta_search(board):
 """
 **********************************Max Value calculation*********************************
 function MAX-VALUE(state,alpha, b) returns a utility value
-
 """
-
-def max_value(state, alpha, beta, depth):
+def max_value(state, alpha, beta, depth, start_time):
     local_depth = 0
     print "Depth =", depth
     global globaldepth
-    if globaldepth == 2:
-        return evaluation(state)
+    if time.time() - start_time > 2:
+        return 5
+    if globaldepth == 2 or time.time() - start_time > 2:
+        # return Eval.utilGen2(state)
+        return Eval.utilGen(state)
     if terminal(state) == None:
-        return utility(state)
+        # return Eval.utilGen2(state)
+        return Eval.utilGen(state)
     v = -float("inf")
 
     for x in range(0,15):
         for y in range(0,15):
             if state[x][y] == None and check_neighbor(board, x, y): #only checks if the element is inserted near a board piece
                 state[x][y] = 1
-                v = max(v, min_value(state, alpha, beta, depth-1))
+                v = max(v, min_value(state, alpha, beta, depth-1, start_time))
                 state[x][y] = None
             if v >= beta:
                 return v
@@ -109,20 +125,22 @@ def max_value(state, alpha, beta, depth):
 function MIN-VALUE(state,)
 """
 
-def min_value(state, alpha, beta, depth):
+def min_value(state, alpha, beta, depth, start_time):
 
     global globaldepth
-    if globaldepth == 2:
-        return evaluation(state)
+    if globaldepth == 2 or time.time() - start_time > 2:
+        # return Eval.utilGen2(state)
+        return Eval.utilGen(state)
     if terminal(state) == None:
-        return utility(state)
+        # return Eval.utilGen2(state)
+        return Eval.utilGen(state)
     v = float("inf")
 
     for x in range(0,15):
         for y in range(0,15):
             if state[x][y] == None and check_neighbor(board, x, y):
                 state[x][y] = 0
-                v = min(v, max_value(state, alpha, beta, depth))
+                v = min(v, max_value(state, alpha, beta, depth, start_time))
                 state[x][y] = None
             if v <= alpha:
                 return v
@@ -131,11 +149,6 @@ def min_value(state, alpha, beta, depth):
     return v
 
 
-def utility(state):
-    return 1
-
-def evaluation(state):
-    pass
 
 # def terminal(state):
 #     pass
@@ -171,7 +184,7 @@ def check_neighbor(board, x, y):
 
 
 def terminal(board):
-    if Eval.utilGen2(board) >= 10000 or Eval.utilGen2(board) <= -10000:
+    if Eval.utilGen(board) >= 10000 or Eval.utilGen(board) <= -10000:
         return True
     dval = True
 

@@ -12,7 +12,7 @@ def hGen(Board):
         colcount = 0
         currentcol = []
         for j in i:
-            currentcol.add(Board[rCount][colcount])
+            currentcol.append(Board[rCount][colcount])
             colcount = colcount + 1
         colDist = rowUtility(currentcol)
 
@@ -101,13 +101,9 @@ def openEnds(row, index):
 
 def utilGen2(board):
     utilVal = 0
-
     rowCount = 0
     colCount = 0
-
-
     activeCount = 0
-
 
     #add utility for rows
     while(rowCount <= 14):
@@ -116,8 +112,6 @@ def utilGen2(board):
         utilVal += rowUtility(local_list)
         rowCount += 1
 
-
-
     #add utility for columns
     rowCount = 0
     while (rowCount <= 14):
@@ -125,8 +119,6 @@ def utilGen2(board):
 
         while(colCount <= 14):
             currentcol.append(board[rowCount][colCount])
-
-
 
         utilVal += rowUtility(currentcol)
         colCount += 1
@@ -165,5 +157,7 @@ def utilGen2(board):
 
     return utilVal
 
+def utilGen(board):
+    return 5
 
 
